@@ -3,6 +3,7 @@ import sys
 
 filename = sys.argv[1]
 N = int(sys.argv[2])
+
 hexa = []
 binary = []
 
@@ -68,6 +69,9 @@ for i in range(32):
 
 def final(x):
   return x % (2**32)
+
+def alwaysZero():
+  registers[0] = 0
 
 def sign2unsign(x):
   if x >= 0:
@@ -135,6 +139,7 @@ for i in range(len(inst_hexa)):
     if opcode == "0110111":
       #lui
       registers[register(rd)] = final(u_int_imm(imm))
+      alwaysZero()
 
   elif opcode in type_I:
     imm = inst_binary[i][:12]
@@ -145,6 +150,7 @@ for i in range(len(inst_hexa)):
     if funct3 == "000":
       #addi
       registers[register(rd)] = final((registers[register(rs1)] + sign_int_imm(imm)))
+      alwaysZero()
 
     elif funct3 == "010":
       #slti
@@ -156,6 +162,7 @@ for i in range(len(inst_hexa)):
         registers[register(rd)] = 1
       else:
         registers[register(rd)] = 0
+      alwaysZero()
 
     elif funct3 == "011":
       #sltui
@@ -163,18 +170,22 @@ for i in range(len(inst_hexa)):
         registers[register(rd)] = 1
       else:
         registers[register(rd)] = 0
+      alwaysZero()
 
     elif funct3 == "100":
       #xori
       registers[register(rd)] = int((sign_int_imm(imm)) ^ (registers[register(rs1)]))
+      alwaysZero()
 
     elif funct3 == "110":
       #ori
       registers[register(rd)] = int((sign_int_imm(imm)) | (registers[register(rs1)]))
+      alwaysZero()
 
     elif funct3 == "111":
       #andi
       registers[register(rd)] = final(int((sign_int_imm(imm)) & (registers[register(rs1)])))
+      alwaysZero()
 
     elif funct3 == "001":
       shamt = imm[7:]
@@ -182,6 +193,7 @@ for i in range(len(inst_hexa)):
         #slli
         registers[register(rd)] = final(
           int((registers[register(rs1)]) << shamt_int_imm(shamt)))
+        alwaysZero()
 
     elif funct3 == "101":
       shamt = imm[7:]
@@ -189,6 +201,7 @@ for i in range(len(inst_hexa)):
         #srli
         registers[register(rd)] = final(
           int((registers[register(rs1)]) >> shamt_int_imm(shamt)))
+        alwaysZero()
 
       elif imm[:7] == "0100000":
         #srai
@@ -198,6 +211,7 @@ for i in range(len(inst_hexa)):
             registers[register(rd)] += 2**(31 - i)
         registers[register(rd)] += int(
           (registers[register(rs1)]) >> (shamt_int_imm(shamt)))
+        alwaysZero()
 
   elif opcode in type_R:
     funct7 = inst_binary[i][:7]
@@ -210,10 +224,12 @@ for i in range(len(inst_hexa)):
       if funct3 == "000":
         #add
         registers[register(rd)] = final(registers[register(rs1)] + registers[register(rs2)])
+        alwaysZero()
 
       elif funct3 == "001":
         #sll
         registers[register(rd)] = final(registers[register(rs1)] << registers[register(rs2)])
+        alwaysZero()
 
       elif funct3 == "010":
         #slt
@@ -231,6 +247,7 @@ for i in range(len(inst_hexa)):
           registers[register(rd)] = 1
         else:
           registers[register(rd)] = 0
+        alwaysZero()
 
       elif funct3 == "011":
         #sltu
@@ -238,27 +255,33 @@ for i in range(len(inst_hexa)):
           registers[register(rd)] = 1
         else:
           registers[register(rd)] = 0
+        alwaysZero()
 
       elif funct3 == "100":
         #xor
         registers[register(rd)] = final((registers[register(rs1)]) ^ (registers[register(rs2)]))
+        alwaysZero()
 
       elif funct3 == "101":
         #srl
         registers[register(rd)] = final((registers[register(rs1)]) >> registers[register(rs2)])
+        alwaysZero()
 
       elif funct3 == "110":
         #or
         registers[register(rd)] = final((registers[register(rs1)]) | (registers[register(rs2)]))
+        alwaysZero()
 
       elif funct3 == "111":
         #and
         registers[register(rd)] = final((registers[register(rs1)]) & (registers[register(rs2)]))
+        alwaysZero()
 
     elif funct7 == "0100000":
       if funct3 == "000":
         #sub
         registers[register(rd)] = final(registers[register(rs1)] - registers[register(rs2)])
+        alwaysZero()
 
       elif funct3 == "101":
         #sra
@@ -267,6 +290,7 @@ for i in range(len(inst_hexa)):
           for i in range(registers[register(rs2)]):
             registers[register(rd)] += 2**(31 - i)
         registers[register(rd)] += final((registers[register(rs1)]) >> registers[register(rs2)])
+        alwaysZero()
 
 for i in range(32):
   print(f"x{i}: {dec2hex(registers[i])} ", end='\n')
