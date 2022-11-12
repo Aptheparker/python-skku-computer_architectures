@@ -73,12 +73,13 @@ for i in range(32):
 def final(x):
   return x % (2**32)
 
-def s2u(x):
+def sign2unsign(x):
   if x >= 0:
     return x
   else:
     return x + 2**32
 
+#decimal to hexa
 def dec2hex(input):
   if input < 0:
     input += 2**32
@@ -95,7 +96,7 @@ def shamt_int_imm(imm):
     exp *= 2
   return output
 
-def s_int_imm(imm):
+def sign_int_imm(imm): # signed
   output = 0
   exp = 1
   if int(imm[0]) == 1:
@@ -109,7 +110,7 @@ def s_int_imm(imm):
       exp *= 2
   return output
 
-def u_int_imm(imm):
+def u_int_imm(imm): #unsigned
   output = 0
   exp = 2**12
   if int(imm[0]) == 1:
@@ -130,16 +131,16 @@ type_I = ["1100111", "0000011", "0010011"]
 type_R = ["0110011"]
 
 for i in range(len(inst_hexa)):
-  opcode = inst_bin[i][25:32]
-  if opcode in U_type:
-    imm = inst_bin[i][:20]
-    rd = inst_bin[i][20:25]
+  opcode = inst_binary[i][25:32]
+  if opcode in type_U:
+    imm = inst_binary[i][:20]
+    rd = inst_binary[i][20:25]
 
     if opcode == "0110111":
       #lui
       registers[register(rd)] = final(u_int_imm(imm))
 
-  elif opcode in I_type:
+  elif opcode in type_I:
     imm = inst_binary[i][:12]
     rs1 = inst_binary[i][12:17]
     funct3 = inst_binary[i][17:20]
@@ -147,129 +148,129 @@ for i in range(len(inst_hexa)):
 
     if funct3 == "000":
       #addi
-      registers[register(rd)] = final((registers[register(rs1)] + s_int_imm(imm)))
+      registers[register(rd)] = final((registers[register(rs1)] + sign_int_imm(imm)))
 
     elif funct3 == "010":
       #slti
-      if x[registers(rs1)] >= 2**31:
+      if registers[register(rs1)] >= 2**31:
         temp = registers[register(rs1)] - 2**32
       else:
         temp = registers[register(rs1)]
-      if temp < (s_int_imm(imm)):
-        x[name_regs(rd)] = 1
+      if temp < (sign_int_imm(imm)):
+        registers[register(rd)] = 1
       else:
-        x[name_regs(rd)] = 0
+        registers[register(rd)] = 0
 
     elif funct3 == "011":
       #sltui
-      if (x[name_regs(rs1)] < (s_int_imm(imm))):
-        x[name_regs(rd)] = 1
+      if (registers[register(rs1)] < (sign_int_imm(imm))):
+        registers[register(rd)] = 1
       else:
-        x[name_regs(rd)] = 0
+        registers[register(rd)] = 0
 
     elif funct3 == "100":
       #xori
-      x[name_regs(rd)] = int((s_int_imm(imm)) ^ (x[name_regs(rs1)]))
+      registers[register(rd)] = int((sign_int_imm(imm)) ^ (registers[register(rs1)]))
 
     elif funct3 == "110":
       #ori
-      x[name_regs(rd)] = int((s_int_imm(imm)) | (x[name_regs(rs1)]))
+      registers[register(rd)] = int((sign_int_imm(imm)) | (registers[register(rs1)]))
 
     elif funct3 == "111":
       #andi
-      x[name_regs(rd)] = final(int((s_int_imm(imm)) & (x[name_regs(rs1)])))
+      registers[register(rd)] = final(int((sign_int_imm(imm)) & (registers[register(rs1)])))
 
     elif funct3 == "001":
       shamt = imm[7:]
       if imm[:7] == "0000000":
         #slli
-        x[name_regs(rd)] = final(
-          int((x[name_regs(rs1)]) << shamt_int_imm(shamt)))
+        registers[register(rd)] = final(
+          int((registers[register(rs1)]) << shamt_int_imm(shamt)))
 
     elif funct3 == "101":
       shamt = imm[7:]
       if imm[:7] == "0000000":
         #srli
-        x[name_regs(rd)] = final(
-          int((x[name_regs(rs1)]) >> shamt_int_imm(shamt)))
+        registers[register(rd)] = final(
+          int((registers[register(rs1)]) >> shamt_int_imm(shamt)))
 
       elif imm[:7] == "0100000":
         #srai
-        x[name_regs(rd)] = 0
-        if x[name_regs(rs1)] >= 2**31:
+        registers[register(rd)] = 0
+        if registers[register(rs1)] >= 2**31:
           for i in range(shamt_int_imm(shamt)):
-            x[name_regs(rd)] += 2**(31 - i)
-        x[name_regs(rd)] += int(
-          (x[name_regs(rs1)]) >> (shamt_int_imm(shamt)))
+            registers[register(rd)] += 2**(31 - i)
+        registers[register(rd)] += int(
+          (registers[register(rs1)]) >> (shamt_int_imm(shamt)))
 
-  elif opcode in R_type:
-    funct7 = inst_bin[i][:7]
-    rs2 = inst_bin[i][7:12]
-    rs1 = inst_bin[i][12:17]
-    funct3 = inst_bin[i][17:20]
-    rd = inst_bin[i][20:25]
+  elif opcode in type_R:
+    funct7 = inst_binary[i][:7]
+    rs2 = inst_binary[i][7:12]
+    rs1 = inst_binary[i][12:17]
+    funct3 = inst_binary[i][17:20]
+    rd = inst_binary[i][20:25]
 
     if funct7 == "0000000":
       if funct3 == "000":
         #add
-        x[name_regs(rd)] = final(x[name_regs(rs1)] + x[name_regs(rs2)])
+        registers[register(rd)] = final(registers[register(rs1)] + registers[register(rs2)])
 
       elif funct3 == "001":
         #sll
-        x[name_regs(rd)] = final(x[name_regs(rs1)] << x[name_regs(rs2)])
+        registers[register(rd)] = final(registers[register(rs1)] << registers[register(rs2)])
 
       elif funct3 == "010":
         #slt
-        if (x[name_regs(rs1)] >= 2**31):
-          temp1 = x[name_regs(rs1)] - 2**32
+        if (registers[register(rs1)] >= 2**31):
+          temp1 = registers[register(rs1)] - 2**32
         else:
-          temp1 = x[name_regs(rs1)]
+          temp1 = registers[register(rs1)]
 
-        if (x[name_regs(rs2)] >= 2**31):
-          temp2 = x[name_regs(rs2)] - 2**32
+        if (registers[register(rs2)] >= 2**31):
+          temp2 = registers[register(rs2)] - 2**32
         else:
-          temp2 = x[name_regs(rs2)]
+          temp2 = registers[register(rs2)]
 
         if (temp1 < temp2):
-          x[name_regs(rd)] = 1
+          registers[register(rd)] = 1
         else:
-          x[name_regs(rd)] = 0
+          registers[register(rd)] = 0
 
       elif funct3 == "011":
         #sltu
-        if (s2u(x[name_regs(rs1)]) < s2u(x[name_regs(rs2)])):
-          x[name_regs(rd)] = 1
+        if (sign2unsign(registers[register(rs1)]) < sign2unsign(registers[register(rs2)])):
+          registers[register(rd)] = 1
         else:
-          x[name_regs(rd)] = 0
+          registers[register(rd)] = 0
 
       elif funct3 == "100":
         #xor
-        x[name_regs(rd)] = final((x[name_regs(rs1)]) ^ (x[name_regs(rs2)]))
+        registers[register(rd)] = final((registers[register(rs1)]) ^ (registers[register(rs2)]))
 
       elif funct3 == "101":
         #srl
-        x[name_regs(rd)] = final((x[name_regs(rs1)]) >> x[name_regs(rs2)])
+        registers[register(rd)] = final((registers[register(rs1)]) >> registers[register(rs2)])
 
       elif funct3 == "110":
         #or
-        x[name_regs(rd)] = final((x[name_regs(rs1)]) | (x[name_regs(rs2)]))
+        registers[register(rd)] = final((registers[register(rs1)]) | (registers[register(rs2)]))
 
       elif funct3 == "111":
         #and
-        x[name_regs(rd)] = final((x[name_regs(rs1)]) & (x[name_regs(rs2)]))
+        registers[register(rd)] = final((registers[register(rs1)]) & (registers[register(rs2)]))
 
     elif funct7 == "0100000":
       if funct3 == "000":
         #sub
-        x[name_regs(rd)] = final(x[name_regs(rs1)] - x[name_regs(rs2)])
+        registers[register(rd)] = final(registers[register(rs1)] - registers[register(rs2)])
 
       elif funct3 == "101":
         #sra
-        x[name_regs(rd)] = 0
-        if (x[name_regs(rs1)] >= 2**31):
-          for i in range(x[name_regs(rs2)]):
-            x[name_regs(rd)] += 2**(31 - i)
-        x[name_regs(rd)] += final((x[name_regs(rs1)]) >> x[name_regs(rs2)])
+        registers[register(rd)] = 0
+        if (registers[register(rs1)] >= 2**31):
+          for i in range(registers[register(rs2)]):
+            registers[register(rd)] += 2**(31 - i)
+        registers[register(rd)] += final((registers[register(rs1)]) >> registers[register(rs2)])
 
 for i in range(32):
   print(f"x{i}: {dec2hex(registers[i])} ", end='\n')
