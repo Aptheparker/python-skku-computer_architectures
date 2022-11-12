@@ -53,10 +53,6 @@ for i in range(len(sorted_hexa)):
     inst_hexa[i // 4] += sorted_hexa[i][2:]
     inst_binary[i // 4] += sorted_binary[i][2:]
 
-def unsigned(n):
-  return n & 0xffffffff
-
-
 #define
 def register(rs): #register name
   output = 0
